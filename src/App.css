@@ -1,0 +1,14 @@
+.card {
+  height: 340px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid transparent;
+}
+
+.card-content {
+  flex: 1;
+}
+
+.selected-card {
+  border-color: var(--bulma-warning-on-scheme);
+}
