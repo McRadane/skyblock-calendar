@@ -1,4 +1,4 @@
-import { createEffect, createMemo, createSignal, For,  Setter } from 'solid-js';
+import { createEffect, createMemo, createSignal, For, Setter } from 'solid-js';
 
 import './App.css';
 import { EventCard, mayorEventsDefinition, otherEventDefinition, yearlyEventDefinition } from './app/events';
@@ -28,6 +28,26 @@ const getMemoisedEvents = (definitions: EventCard[], selected: Record<string, bo
       title
     };
   });
+};
+
+const downloadFile = (mime: string, fileNameString: string, sourceObject: string) => { //text/json
+  const dataStr = `data:${mime};charset=utf-8,${encodeURIComponent(sourceObject)}`;
+  if (!fileNameString.endsWith('.json')) {
+    fileNameString += '.json';
+  }
+
+  const link = document.createElement('a');
+  if (link.download !== undefined) {
+    // Browsers that support HTML5 download attribute
+    link.setAttribute('href', dataStr);
+    link.setAttribute('download', fileNameString);
+    link.style.visibility = 'hidden';
+    link.dataset.interception = 'off';
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
 };
 
 function App() {
@@ -61,7 +81,7 @@ function App() {
   const generateJson = async () => {
     const baseOptions = getSelected();
 
-    const events = await getJSON({ ...baseOptions, maxYear: 2  });
+    const events = await getJSON({ ...baseOptions, maxYear: 2 });
 
     console.log('generateJson', events);
   };
@@ -78,7 +98,9 @@ function App() {
       <p>Select which events you want to track</p>
       <div class="buttons">
         <button class="button is-primary">Generate .ics</button>
-        <button class="button is-link" onClick={generateJson}>Generate .json</button>
+        <button class="button is-link" onClick={generateJson}>
+          Generate .json
+        </button>
       </div>
 
       <h2 class="subtitle">Yearly Events</h2>
