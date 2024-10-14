@@ -1,4 +1,4 @@
-import ics from 'ics';
+import { createEvents, EventAttributes } from 'ics';
 
 import {
   CURRENT_YEAR,
@@ -31,14 +31,20 @@ import {
   yearlyEvents,
   YEARS_CACHE
 } from './constants';
-import { CalendarParams, Event, EventDefinition, GenerateEventParams, MayorEvent, Years } from './types';
+import { CalendarParams, Event, EventDefinition, GenerateEventParams, GenerateSpecialMayorEventParams, MayorEvent, Years } from './types';
+
+export const getYears = (maxYear: number): [number, number] => {
+  return [START_SYEAR, START_SYEAR + getFirstSYearFromYear(CURRENT_YEAR + maxYear + 1)];
+};
 
 const getYearsIrl = (maxYear: number): Years[] => {
   if (YEARS_CACHE.length > 0) {
     return YEARS_CACHE;
   }
 
-  for (let i = 0; i < START_SYEAR + getFirstSYearFromYear(CURRENT_YEAR + maxYear + 1); i++) {
+  const [startYear, endYear] = getYears(maxYear);
+
+  for (let i = startYear; i < endYear; i++) {
     YEARS_CACHE.push([i + 1, new Date(START_DATE_Y1.getTime() + i * YEAR_DURATION)]);
   }
 
@@ -105,71 +111,92 @@ const getSpecialMayorEvents = (data: CalendarParams): MayorEvent[] => {
   return specialMayorEvents;
 };
 
-const generateEvent = ({
-  eventDayEnd,
-  eventDayStart,
+const formatForSpecialMayorEvents = ({
   eventDescriptionParam,
-  eventMonthEnd,
-  eventMonthStart,
   eventNameParam,
-  maxYear,
-  shiftYear = 0,
   specialMayorEvents,
   standardMayorDuration,
-  standardMayorElection
-}: GenerateEventParams): Event[] => {
+  standardMayorElection,
+  year
+}: GenerateSpecialMayorEventParams) => {
+  let addEvent = true;
+  let eventName = eventNameParam;
+  let eventDescription = eventDescriptionParam;
+
+  if (eventName === 'Election') {
+    addEvent = standardMayorElection ?? false;
+    // Check if this is an election for a special mayor
+    const specialMayorEvent = specialMayorEvents.find((specialMayorEvent) => specialMayorEvent[1] === year);
+
+    if (specialMayorEvent?.[2]) {
+      eventName = `Election - Mayor ${specialMayorEvent[0]}`;
+      switch (specialMayorEvent[0]) {
+        case 'Derpy':
+          eventDescription = EVENT_MAYOR_DERPY_ELECTION_DESCRIPTION;
+          break;
+        case 'Jerry':
+          eventDescription = EVENT_MAYOR_JERRY_ELECTION_DESCRIPTION;
+          break;
+        case 'Scorpius':
+          eventDescription = EVENT_MAYOR_SCORPIUS_ELECTION_DESCRIPTION;
+          break;
+      }
+      addEvent = true;
+    }
+  }
+
+  if (eventName === 'Mayor') {
+    addEvent = standardMayorDuration ?? false;
+    // Check if this is an election for a special mayor
+    const specialMayorEvent = specialMayorEvents.find((specialMayorEvent) => specialMayorEvent[1] === year);
+
+    if (specialMayorEvent?.[3]) {
+      eventName = `Mayor ${specialMayorEvent[0]}`;
+      switch (specialMayorEvent[0]) {
+        case 'Derpy':
+          eventDescription = EVENT_MAYOR_DERPY_DURATION_DESCRIPTION;
+          break;
+        case 'Jerry':
+          eventDescription = EVENT_MAYOR_JERRY_DURATION_DESCRIPTION;
+          break;
+        case 'Scorpius':
+          eventDescription = EVENT_MAYOR_SCORPIUS_DURATION_DESCRIPTION;
+          break;
+      }
+      addEvent = true;
+    }
+  }
+
+  return { addEvent, eventDescription, eventName };
+};
+
+const generateEvent = (options: GenerateEventParams): Event[] => {
   // 500 year
   const events: Event[] = [];
+  const {
+    eventDayEnd,
+    eventDayStart,
+    eventDescriptionParam,
+    eventMonthEnd,
+    eventMonthStart,
+    eventNameParam,
+    maxYear,
+    shiftYear = 0,
+    specialMayorEvents
+  } = options;
 
-  for (let year = START_SYEAR; year < START_SYEAR + getFirstSYearFromYear(CURRENT_YEAR + maxYear + 1); year++) {
+  const [startYear, endYear] = getYears(maxYear);
+
+  for (let year = startYear; year < endYear; year++) {
     let addEvent = true;
     let eventName = eventNameParam;
     let eventDescription = eventDescriptionParam;
 
     if (specialMayorEvents) {
-      if (eventName === 'Election') {
-        addEvent = standardMayorElection ?? false;
-        // Check if this is an election for a special mayor
-        const specialMayorEvent = specialMayorEvents.find((specialMayorEvent) => specialMayorEvent[1] === year);
-
-        if (specialMayorEvent?.[2]) {
-          eventName = `Election - Mayor ${specialMayorEvent[0]}`;
-          switch(specialMayorEvent[0]) {
-            case 'Derpy':
-              eventDescription = EVENT_MAYOR_DERPY_ELECTION_DESCRIPTION
-              break;
-            case 'Jerry':
-              eventDescription = EVENT_MAYOR_JERRY_ELECTION_DESCRIPTION
-              break;
-            case 'Scorpius':
-              eventDescription = EVENT_MAYOR_SCORPIUS_ELECTION_DESCRIPTION
-              break;
-          }
-          addEvent = true;
-        }
-      }
-
-      if (eventName === 'Mayor') {
-        addEvent = standardMayorDuration ?? false;
-        // Check if this is an election for a special mayor
-        const specialMayorEvent = specialMayorEvents.find((specialMayorEvent) => specialMayorEvent[1] === year);
-
-        if (specialMayorEvent?.[3]) {
-          eventName = `Mayor ${specialMayorEvent[0]}`;
-          switch(specialMayorEvent[0]) {
-            case 'Derpy':
-              eventDescription = EVENT_MAYOR_DERPY_DURATION_DESCRIPTION
-              break;
-            case 'Jerry':
-              eventDescription = EVENT_MAYOR_JERRY_DURATION_DESCRIPTION
-              break;
-            case 'Scorpius':
-              eventDescription = EVENT_MAYOR_SCORPIUS_DURATION_DESCRIPTION
-              break;
-          }
-          addEvent = true;
-        }
-      }
+      const response = formatForSpecialMayorEvents({ ...options, specialMayorEvents, year });
+      addEvent = response.addEvent;
+      eventName = response.eventName;
+      eventDescription = response.eventDescription;
     }
 
     if (addEvent) {
@@ -299,6 +326,8 @@ const generateIrlEvents = (params: CalendarParams): Event[] => {
 const generateRecuringEvents = (params: CalendarParams): Event[] => {
   let allEvents: Event[] = [];
 
+  const [startYear, endYear] = getYears(params.maxYear);
+
   recuringEvents.forEach((recuringEvent) => {
     const eventToGenerate = checkEventToGenerate(recuringEvent, params);
 
@@ -306,7 +335,7 @@ const generateRecuringEvents = (params: CalendarParams): Event[] => {
       return;
     }
 
-    for (let year = START_SYEAR; year < START_SYEAR + getFirstSYearFromYear(CURRENT_YEAR + params.maxYear + 1); year++) {
+    for (let year = startYear; year < endYear; year++) {
       //convertDaySkyblockToDateSkyblock
 
       const startDay = recuringEvent.firstDay + (recuringEvent.firstMonth - 1) * 31;
@@ -346,7 +375,7 @@ export const generateEvents = (params: CalendarParams): Event[] => {
 };
 
 export const generateCalendar = (events: Event[]): string => {
-  const icsEvents: ics.EventAttributes[] = [];
+  const icsEvents: EventAttributes[] = [];
 
   const DURATION_DAY = 24 * 60 * 60 * 1000;
   const DURATION_HOUR = 60 * 60 * 1000;
@@ -373,7 +402,7 @@ export const generateCalendar = (events: Event[]): string => {
       minutes = Math.floor(duration / DURATION_MINUTE);
     }
 
-    const icsEvent: ics.EventAttributes = {
+    const icsEvent: EventAttributes = {
       description: event.eventDescription,
       duration: { days, hours, minutes },
       start: [
@@ -389,10 +418,11 @@ export const generateCalendar = (events: Event[]): string => {
     icsEvents.push(icsEvent);
   });
 
-  const { error, value } = ics.createEvents(icsEvents);
+  const { error, value } = createEvents(icsEvents);
 
   if (error) {
-    console.log(error);
+    // eslint-disable-next-line no-console
+    console.error('Error occuring in ICS generation. Please report on GitHub', error);
     return '';
   }
 

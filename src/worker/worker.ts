@@ -1,12 +1,21 @@
-import { generateCalendar, generateEvents } from '../app/functions';
+import { generateCalendar, generateEvents, getYears } from '../app/functions';
+import { CalendarParams } from '../app/types';
+import { logging } from '../logging';
 import { GetDataType } from './type';
 
 self.onmessage = (event: MessageEvent<string>) => {
   const data = JSON.parse(event.data) as GetDataType;
 
-  const events = generateEvents(data.options);
+  if (data.request === 'years') {
+    //const ics = generateCalendar(events);
+    const years = getYears(data.options as number);
+    self.postMessage(years);
+    return;
+  }
 
-  console.log('Receiving request for ' + data.request);
+  const events = generateEvents(data.options as CalendarParams);
+
+  logging('Receiving request for ' + data.request);
 
   if (data.request === 'json') {
     // Remove the 'description' field from the events

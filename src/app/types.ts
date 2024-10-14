@@ -34,18 +34,23 @@ export interface RecuringEvents extends EventDefinition {
   recuringDay: number;
 }
 
-export interface GenerateEventParams {
+export interface GenerateSpecialMayorEventParams {
+  eventDescriptionParam: string;
+  eventNameParam: string;
+  specialMayorEvents: MayorEvent[];
+  standardMayorDuration?: boolean;
+  standardMayorElection?: boolean;
+  year: number;
+}
+
+export interface GenerateEventParams extends Omit<GenerateSpecialMayorEventParams, 'specialMayorEvents' | 'year'> {
   eventDayEnd: number;
   eventDayStart: number;
-  eventDescriptionParam: string;
   eventMonthEnd: number;
   eventMonthStart: number;
-  eventNameParam: string;
   maxYear: number;
   shiftYear?: number;
   specialMayorEvents?: MayorEvent[];
-  standardMayorDuration?: boolean;
-  standardMayorElection?: boolean;
 }
 
 export interface Event {

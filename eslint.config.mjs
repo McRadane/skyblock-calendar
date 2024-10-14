@@ -1,69 +1,65 @@
-import { FlatCompat } from "@eslint/eslintrc";
-import eslint from "@eslint/js";
+import { FlatCompat } from '@eslint/eslintrc';
+import eslint from '@eslint/js';
+import eslintConfigPrettier from 'eslint-config-prettier';
 import onlyWarnPlugin from 'eslint-plugin-only-warn';
-import perfectionistPlugin from "eslint-plugin-perfectionist";
-import sonarjsPlugin from "eslint-plugin-sonarjs";
-import webPlugin from "eslint-plugin-web";
+import perfectionistPlugin from 'eslint-plugin-perfectionist';
+// import sonarjsPlugin from "eslint-plugin-sonarjs";
+import webPlugin from 'eslint-plugin-web';
 import path from 'path';
-import typescriptPlugin from "typescript-eslint";
-import url from "url";
+import typescriptPlugin from 'typescript-eslint';
+import url from 'url';
 
 const __filename = url.fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const compat = new FlatCompat({
-  baseDirectory: __dirname,
+  baseDirectory: __dirname
 });
 
 const config = [
   {
-    files: [
-      "**/*.cjs",
-      "**/*.mjs",
-      "**/*.js",
-      "**/*.ts",
-      "**/*.tsx",
-      "**/*.json",
-    ],
-    ignores: ["coverage/**", "test/**", "build/**", "dist/**", ".public/**"],
-    name: "Global Include and Ignore",
-    plugins: { 'only-warn': onlyWarnPlugin },
+    files: ['**/*.ts', '**/*.tsx'],
+    ignores: ['src/assets/**', 'public/**'],
+    name: 'Global Include and Ignore',
+    plugins: { 'only-warn': onlyWarnPlugin }
   },
   {
-    name: "ESLint Recommended",
-    ...eslint.configs.recommended,
+    name: 'ESLint Recommended',
+    ...eslint.configs.recommended
   },
   ...typescriptPlugin.configs.recommended,
   {
-    name: "Web Plugin",
+    name: 'Web Plugin',
     plugins: {
-      web: webPlugin,
+      web: webPlugin
     },
-    rules: webPlugin.configs.all.rules,
+    rules: webPlugin.configs.all.rules
   },
-  ...compat.extends("plugin:import/typescript"),
+  ...compat.extends('plugin:import/typescript'),
   {
-    name: "Perfecionist plugin",
+    name: 'Perfecionist plugin',
     plugins: { perfectionist: perfectionistPlugin },
     rules: {
-      ...perfectionistPlugin.configs["recommended-natural"].rules,
-
-    },
+      ...perfectionistPlugin.configs['recommended-natural'].rules
+    }
   },
+  /*
+  Eslint Sonar Plugin is currently not compatible with eslint 8
   {
     name: "SonarLint Plugin",
     plugins: {
       sonarjs: sonarjsPlugin,
     },
     rules: sonarjsPlugin.configs.recommended.rules,
-  },
+  },*/
   {
-    name: "Rules",
+    name: 'Rules',
 
     rules: {
-      'no-console': 'warn',
-    },
+      'no-console': 'warn'
+    }
   },
+  eslintConfigPrettier
 ];
 
 export default config;

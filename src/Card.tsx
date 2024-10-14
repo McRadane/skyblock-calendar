@@ -33,9 +33,9 @@ export const Card = (props: CardProps) => {
           </div>
         </div>
         <footer class="card-footer">
-          <a class="card-footer-item" onclick={onClick}>
+          <button class="card-footer-item has-text-link" onclick={onClick}>
             {selected ? 'Deselect' : 'Select'}
-          </a>
+          </button>
         </footer>
       </div>
     </div>
