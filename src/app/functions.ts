@@ -42,9 +42,9 @@ const getYearsIrl = (maxYear: number): Years[] => {
     return YEARS_CACHE;
   }
 
-  const [startYear, endYear] = getYears(maxYear);
+  const [, endYear] = getYears(maxYear);
 
-  for (let i = startYear; i < endYear; i++) {
+  for (let i = 0; i < endYear; i++) {
     YEARS_CACHE.push([i + 1, new Date(START_DATE_Y1.getTime() + i * YEAR_DURATION)]);
   }
 
