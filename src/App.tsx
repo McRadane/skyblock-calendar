@@ -150,7 +150,7 @@ function App() {
         </section>
       </div>
       <footer class="section footer">
-        McRadane - <a href="">source code</a>
+        McRadane - <a href="https://github.com/McRadane/skyblock-calendar">source code</a>
       </footer>
     </>
   );
