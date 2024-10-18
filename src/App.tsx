@@ -8,7 +8,6 @@ import { getMemoisedEvents, getSelectedFromCache, getYearsFromCache } from './ca
 import { Card } from './Card';
 import { downloadIcs, downloadJson } from './download';
 import { logging } from './logging';
-
 // @ts-expect-error -- The modelYears is used by Solid
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { modelYears } from './models';
@@ -18,6 +17,8 @@ function App() {
   const [getSelected, setSelected] = createSignal<Record<string, boolean>>({});
   const [wantedYears, setWantedYears] = createSignal(2);
   const [years, setYears] = createSignal<[number, number]>(getYears(wantedYears()));
+  const [generateICSLoading, setGenerateICSLoading] = createSignal(false);
+  const [generateJSONLoading, setGenerateJSONLoading] = createSignal(false);
 
   createEffect(() => {
     const selectedCache = getSelectedFromCache();
@@ -63,21 +64,25 @@ function App() {
   const generateJSON = async () => {
     const baseOptions = getSelected();
 
+    setGenerateJSONLoading(true);
     const events = await workerCallGetJSON({ ...baseOptions, maxYear: 2 });
 
     logging('Generated JSON', events);
 
     downloadJson(`hypixel-skyblock-events-${new Date().toISOString().slice(0, 10)}.json`, events);
+    setGenerateJSONLoading(false);
   };
 
   const generateICS = async () => {
     const baseOptions = getSelected();
 
+    setGenerateICSLoading(true);
     const events = await workerCallGetICS({ ...baseOptions, maxYear: 2 });
 
     logging('Generated ICS', events);
 
     downloadIcs(`hypixel-skyblock-events-${new Date().toISOString().slice(0, 10)}.ics`, events);
+    setGenerateICSLoading(false);
   };
 
   return (
@@ -107,10 +112,18 @@ function App() {
             </div>
             <div class="column">
               <div class="buttons">
-                <button class="button is-primary" onClick={generateICS}>
+                <button
+                  classList={{ button: true, 'is-loading': generateICSLoading(), 'is-primary': true }}
+                  disabled={generateICSLoading()}
+                  onClick={generateICS}
+                >
                   download iCal (.ics)
                 </button>
-                <button class="button is-link" onClick={generateJSON}>
+                <button
+                  classList={{ button: true, 'is-link': true, 'is-loading': generateJSONLoading() }}
+                  disabled={generateJSONLoading()}
+                  onClick={generateJSON}
+                >
                   Download data (.json)
                 </button>
               </div>

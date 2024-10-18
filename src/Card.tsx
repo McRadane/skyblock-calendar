@@ -1,10 +1,10 @@
 export interface CardProps {
-  date: string;
-  description: string;
-  image: string;
-  onClick: () => void;
-  selected: boolean;
-  title: string;
+  readonly date: string;
+  readonly description: string;
+  readonly image: string;
+  readonly onClick: () => void;
+  readonly selected: boolean;
+  readonly title: string;
 }
 export const Card = (props: CardProps) => {
   const { date, description, image, onClick, selected, title } = props;
